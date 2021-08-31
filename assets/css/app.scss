@@ -1,6 +1,8 @@
 @import "./app/variables";
 @import "./app/fonts";
-@import "~bootstrap/scss/bootstrap";
+@import "../vendor/bootstrap/bootstrap.scss";
+@import "../vendor/uPlot.min.scss";
+
 @import "./app/layout";
 
 // Extends
@@ -35,4 +37,3 @@
 @import "./app/utils/tabular_info";
 
 @import "./app/liveview";
-@import "../node_modules/nprogress/nprogress.css";

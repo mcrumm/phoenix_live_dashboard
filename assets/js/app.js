@@ -1,7 +1,6 @@
-import css from "../css/app.scss"
 import "phoenix_html"
 import { Socket, LongPoll } from "phoenix"
-import NProgress from "nprogress"
+import topbar from "../vendor/topbar"
 import { LiveSocket } from "phoenix_live_view"
 import PhxChartComponent from "./metrics_live"
 import PhxRequestLoggerCookie from "./request_logger_cookie"
@@ -58,8 +57,9 @@ socket.onConnError = (...args) => {
 }
 
 // Show progress bar on live navigation and form submits
-window.addEventListener("phx:page-loading-start", info => NProgress.start())
-window.addEventListener("phx:page-loading-stop", info => NProgress.done())
+topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+window.addEventListener("phx:page-loading-start", info => topbar.show())
+window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()

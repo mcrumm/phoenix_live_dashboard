@@ -16,22 +16,25 @@ Application.put_env(:phoenix_live_dashboard, DemoWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "Hu4qQN3iKzTV4fJxhorPQlA/osH9fAMtbtjVS58PFgfw3ja5Z18Q/WSNR9wP4OfW",
   live_view: [signing_salt: "hMegieSe"],
-  http: [port: System.get_env("PORT") || 4000],
+  http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT") || 4000],
   debug_errors: true,
   check_origin: false,
   pubsub_server: Demo.PubSub,
   watchers: [
-    node: [
-      "node_modules/webpack/bin/webpack.js",
-      "--mode",
-      System.get_env("NODE_ENV") || "production",
-      "--watch-stdin",
-      cd: "assets"
-    ]
+    esbuild: {
+      Esbuild,
+      :install_and_run,
+      [:default, ~w(--sourcemap=inline --watch)]
+    },
+    sass: {
+      DartSass,
+      :install_and_run,
+      [:default, ~w(--embed-source-map --source-map-urls=absolute --watch)]
+    }
   ],
   live_reload: [
     patterns: [
-      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"priv/static/assets/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"lib/phoenix/live_dashboard/(live|views)/.*(ex)$",
       ~r"lib/phoenix/live_dashboard/templates/.*(ex)$"
     ]

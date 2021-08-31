@@ -34,7 +34,8 @@ defmodule Phoenix.LiveDashboard.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "cmd npm install --prefix assets"],
-      dev: "run --no-halt dev.exs"
+      dev: "run --no-halt dev.exs",
+      "assets.build": ["esbuild default --minify", "sass default --no-source-map --style=compressed"]
     ]
   end
 
@@ -54,7 +55,9 @@ defmodule Phoenix.LiveDashboard.MixProject do
       {:jason, "~> 1.0", only: [:dev, :test, :docs]},
       {:floki, "~> 0.27.0", only: :test},
       {:stream_data, "~> 0.1", only: :test},
-      {:ex_doc, "~> 0.21", only: :docs}
+      {:ex_doc, "~> 0.21", only: :docs},
+      {:esbuild, "~> 0.2.1", only: :dev},
+      {:dart_sass, "~> 0.1", only: :dev}
     ]
   end
 
