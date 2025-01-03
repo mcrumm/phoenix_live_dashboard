@@ -281,21 +281,58 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
   @doc false
   def processes_callback(search, sort_by, sort_dir, limit, prev_reductions) do
     multiplier = sort_dir_multiplier(sort_dir)
+    constants = {prev_reductions, search, sort_by, multiplier, limit}
+    reduce_processes(Process.list(), constants)
+  end
 
-    processes =
-      for pid <- Process.list(),
-          info = process_info(pid, prev_reductions[pid]),
-          show_process?(info, search) do
-        sorter = info[sort_by] * multiplier
-        {sorter, info}
+  defp reduce_processes(pids, {prev_reductions, search, sort_by, multiplier, limit}) do
+    reduce_processes(pids, {prev_reductions, search, sort_by, multiplier, limit}, {[], 0, %{}})
+  end
+
+  defp reduce_processes([], _, {processes, count, next_state}) do
+    {processes |> Enum.map(&elem(&1, 1)) |> Enum.reverse(), count, next_state}
+  end
+
+  defp reduce_processes(
+         [pid | pids],
+         {prev_reductions, search, sort_by, multiplier, limit} = constants,
+         {processes, count, next_state}
+       ) do
+    acc =
+      if info = process_info(pid, prev_reductions[pid]) do
+        sorter = info[sort_by] * multiplier * -1
+        show_process? = show_process?(info, search)
+        count = if show_process?, do: count + 1, else: count
+        next_state = Map.put(next_state, info[:pid], info[:reductions])
+
+        processes =
+          case {count, limit, show_process?} do
+            {_, _, false} -> processes
+            {0, limit, _} when limit > 0 -> insert_sorted({sorter, info}, [])
+            {count, limit, _} when count > limit -> tl(insert_sorted({sorter, info}, processes))
+            {_, _, _} -> insert_sorted({sorter, info}, processes)
+          end
+
+        {processes, count, next_state}
+      else
+        {processes, count, next_state}
       end
 
-    next_state = for {_sorter, info} <- processes, into: %{}, do: {info[:pid], info[:reductions]}
+    reduce_processes(pids, constants, acc)
+  end
 
-    count = if search, do: length(processes), else: :erlang.system_info(:process_count)
-    processes = processes |> Enum.sort() |> Enum.take(limit) |> Enum.map(&elem(&1, 1))
+  defp insert_sorted({key, val}, []), do: [{key, val}]
+  defp insert_sorted({key, val}, list), do: insert_sorted({key, val}, list, [])
+  defp insert_sorted(nil, list, []), do: list
+  defp insert_sorted(nil, list, [hd | tl]), do: insert_sorted(nil, [hd | list], tl)
+  defp insert_sorted({key, val}, [], hd), do: insert_sorted(nil, [{key, val}], hd)
 
-    {processes, count, next_state}
+  defp insert_sorted({key, val}, [{low_key, _} | _] = list, hd) when key < low_key do
+    insert_sorted(nil, [{key, val} | list], hd)
+  end
+
+  defp insert_sorted({key, val}, [{low_key, low_val} | tl], hd) when key >= low_key do
+    insert_sorted({key, val}, tl, [{low_key, low_val} | hd])
   end
 
   defp process_info(pid, prev_reductions) do
