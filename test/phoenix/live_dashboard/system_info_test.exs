@@ -339,4 +339,21 @@ defmodule Phoenix.LiveDashboard.SystemInfoTest do
              ] = list
     end
   end
+
+  describe "fetch_instrument_allocations" do
+    test "works" do
+      assert {:ok, {128, 0, allocs}} = SystemInfo.fetch_instrument_allocations(node())
+
+      assert %{
+               system: %{binary: binary_tuple, nif_internal: nif_tuple, port: port_tuple},
+               prim_file: %{},
+               tcp_inet: %{drv_internal: drv_tuple}
+             } = allocs
+
+      assert tuple_size(binary_tuple) == 18
+      assert tuple_size(nif_tuple) == 18
+      assert tuple_size(port_tuple) == 18
+      assert tuple_size(drv_tuple) == 18
+    end
+  end
 end
